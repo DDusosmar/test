@@ -47,3 +47,42 @@ function createPrintableSheetWithFormulas() {
 
   Logger.log('Hidden Rows: ' + hiddenRows.join(', '));
 }
+
+
+function createPrintableSheetWithValues() {
+  var spreadsheet = SpreadsheetApp.getActiveSpreadsheet();
+  var sourceSheet = spreadsheet.getActiveSheet();
+  var sourceSheetName = sourceSheet.getName();
+  var dataRange = sourceSheet.getDataRange();
+  var values = dataRange.getValues(); // Get all values, including calculated results
+  var hiddenRows = [];
+  var visibleRowsMap = {};
+
+  // Find hidden rows and create a map for visible rows
+  for (var i = 0; i < values.length; i++) {
+    if (sourceSheet.isRowHiddenByUser(i + 1)) {
+      hiddenRows.push(i + 1);
+    } else {
+      visibleRowsMap[i + 1] = Object.keys(visibleRowsMap).length + 1;
+    }
+  }
+
+  // Create a new sheet with the same format
+  var newSheetName = 'Printable ' + sourceSheetName;
+  var newSheet = spreadsheet.duplicateSheet(sourceSheet.getId());
+  newSheet.setName(newSheetName);
+
+  // Clear the data in the new sheet
+  newSheet.getDataRange().clearContent();
+
+  // Copy visible rows to the new sheet, replacing formulas with their values
+  var rowOffset = 0;
+  for (var i = 0; i < values.length; i++) {
+    if (!hiddenRows.includes(i + 1)) {
+      // Copy row data (values only)
+      newSheet.getRange(visibleRowsMap[i + 1], 1, 1, values[i].length).setValues([values[i]]);
+    }
+  }
+
+  Logger.log('Hidden Rows: ' + hiddenRows.join(', '));
+}
